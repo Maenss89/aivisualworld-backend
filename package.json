@@ -1,0 +1,26 @@
+{
+  "name": "aivisualworld-backend",
+  "version": "2.0.0",
+  "description": "AIVisualWorld Backend API with Image Generation, LLM, and Payments",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "mongoose": "^7.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.3",
+    "axios": "^1.5.0",
+    "nodemailer": "^6.9.7",
+    "paypal-rest-sdk": "^1.8.1",
+    "openai": "^4.11.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}

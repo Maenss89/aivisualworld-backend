@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIVisualWorld – AI Art & Content Marketplace</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #6c47ff;
+      --primary-dark: #5234e0;
+      --bg: #0d0d12;
+      --surface: #16161e;
+      --surface2: #1e1e2a;
+      --border: #2a2a3a;
+      --text: #f0f0f8;
+      --muted: #8888aa;
+      --error: #ff4d6a;
+      --success: #22c55e;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    input, textarea, select {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); padding: 10px 14px; font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color .2s; width: 100%;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); }
+    button { cursor: pointer; font-family: inherit; transition: all .2s; }
+    .btn {
+      background: var(--primary); color: #fff; border: none; border-radius: 8px;
+      padding: 10px 20px; font-size: 14px; font-weight: 600;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; color: var(--primary); border: 1px solid var(--primary);
+      border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600;
+    }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .error-msg { color: var(--error); font-size: 13px; margin-top: 8px; }
+    .success-msg { color: var(--success); font-size: 13px; margin-top: 8px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+    }
+    .loading { opacity: .6; font-size: 14px; }
+
+    /* NAVBAR */
+    .navbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+      height: 60px; position: sticky; top: 0; z-index: 100;
+    }
+    .navbar-brand {
+      font-size: 18px; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    .navbar-links { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--muted); padding: 8px 12px;
+      border-radius: 6px; font-size: 13px; font-weight: 500;
+    }
+    .nav-btn:hover, .nav-btn.active { background: var(--surface2); color: var(--text); }
+    .nav-btn.logout { color: var(--error); }
+    .nav-btn.logout:hover { background: rgba(255,77,106,.1); }
+
+    /* LAYOUT */
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    /* AUTH */
+    .auth-wrap {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--bg) 0%, #0f0a1e 100%);
+    }
+    .auth-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 40px; width: 100%; max-width: 420px;
+    }
+    .auth-card h1 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .auth-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: var(--muted); }
+    .auth-card form { display: flex; flex-direction: column; gap: 12px; }
+    .auth-card .btn { margin-top: 4px; padding: 12px; font-size: 15px; }
+    .toggle-btn {
+      background: none; border: none; color: var(--primary); font-size: 13px;
+      margin-top: 16px; text-align: center; width: 100%;
+    }
+    .toggle-btn:hover { text-decoration: underline; }
+
+    /* DASHBOARD */
+    .page-title { font-size: 24px; font-weight: 800; margin-bottom: 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .stat-desc { font-size: 12px; color: var(--muted); }
+    .quick-actions h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* IMAGE GENERATOR */
+    .generator-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 700px) { .generator-grid { grid-template-columns: 1fr; } }
+    .section-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .token-info { font-size: 12px; color: var(--muted); margin: 10px 0; background: var(--surface2); padding: 8px 12px; border-radius: 6px; }
+    .image-preview {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+      min-height: 300px; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .image-preview img { width: 100%; border-radius: 12px; }
+    .image-preview .placeholder { color: var(--muted); font-size: 14px; text-align: center; padding: 20px; }
+
+    /* CHAT */
+    .chat-wrap { display: flex; flex-direction: column; height: calc(100vh - 160px); max-height: 720px; }
+    .messages-wrap {
+      flex: 1; overflow-y: auto; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+    .msg-user { background: var(--primary); color: #fff; align-self: flex-end; border-radius: 12px 12px 2px 12px; }
+    .msg-assistant { background: var(--surface2); color: var(--text); align-self: flex-start; border-radius: 12px 12px 12px 2px; }
+    .chat-input-bar {
+      display: flex; gap: 8px; background: var(--surface); border: 1px solid var(--border);
+      border-top: none; border-radius: 0 0 12px 12px; padding: 12px;
+    }
+    .chat-input-bar textarea { resize: none; border-radius: 8px; flex: 1; }
+    .chat-input-bar .btn { align-self: flex-end; white-space: nowrap; }
+
+    /* SUBSCRIPTIONS */
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .plan-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; display: flex; flex-direction: column; gap: 12px; position: relative;
+    }
+    .plan-card.popular { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+    .popular-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--primary); color: #fff; font-size: 11px; font-weight: 700;
+      padding: 3px 12px; border-radius: 20px; white-space: nowrap;
+    }
+    .plan-name { font-size: 16px; font-weight: 700; }
+    .plan-price { font-size: 32px; font-weight: 800; color: var(--primary); }
+    .plan-price span { font-size: 14px; color: var(--muted); font-weight: 400; }
+    .plan-tokens { font-size: 13px; color: var(--muted); }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .plan-features li { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .plan-features li::before { content: "✓"; color: var(--success); font-weight: 700; }
+    .plan-current-label { font-size: 12px; color: var(--success); font-weight: 600; text-align: center; }
+
+    /* ACCOUNT */
+    .account-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .info-card label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: block; }
+    .info-card p { font-size: 16px; font-weight: 600; }
+    .info-card .tokens { color: var(--primary); font-size: 22px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; width: fit-content; }
+    .tab-btn { background: none; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .tab-btn.active { background: var(--primary); color: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .status-completed { color: var(--success); }
+    .status-pending { color: #f59e0b; }
+    .status-failed { color: var(--error); }
+    .empty-state { text-align: center; color: var(--muted); padding: 40px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ═══ API BASE — swap this to your Render.com URL once deployed ═══
+    const API_BASE = window.API_BASE || "";
+
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ─── STORE (localStorage-backed) ────────────────────────────────────────
+    const getToken = () => localStorage.getItem('aivw_token');
+    const getUser  = () => { try { return JSON.parse(localStorage.getItem('aivw_user')); } catch { return null; } };
+    const saveAuth = (token, user) => { localStorage.setItem('aivw_token', token); localStorage.setItem('aivw_user', JSON.stringify(user)); };
+    const clearAuth = () => { localStorage.removeItem('aivw_token'); localStorage.removeItem('aivw_user'); };
+
+    // ─── API HELPER ─────────────────────────────────────────────────────────
+    const api = async (path, opts = {}, token = null) => {
+      const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+      const res = await fetch(API_BASE + path, { headers, ...opts });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+      return data;
+    };
+
+    // ─── AUTH ────────────────────────────────────────────────────────────────
+    function Auth({ onLogin }) {
+      const [isLogin, setIsLogin] = useState(true);
+      const [form, setForm] = useState({ username: '', email: '', password: '' });
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+
+      const submit = async (e) => {
+        e.preventDefault(); setError(''); setLoading(true);
+        try {
+          const url = isLogin ? '/api/auth/login' : '/api/auth/register';
+          const body = isLogin ? { email: form.email, password: form.password } : form;
+          const data = await api(url, { method: 'POST', body: JSON.stringify(body) });
+          saveAuth(data.token, data.user);
+          onLogin(data.token, data.user);
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-wrap">
+          <div className="auth-card">
+            <h1>🎨 AIVisualWorld</h1>
+            <h2>{isLogin ? 'Sign in to your account' : 'Create an account'}</h2>
+            <form onSubmit={submit}>
+              {!isLogin && (
+                <input type="text" placeholder="Username" value={form.username}
+                  onChange={e => setForm({...form, username: e.target.value})} required />
+              )}
+              <input type="email" placeholder="Email address" value={form.email}
+                onChange={e => setForm({...form, email: e.target.value})} required />
+              <input type="password" placeholder="Password" value={form.password}
+                onChange={e => setForm({...form, password: e.target.value})} required />
+              {error && <div className="error-msg">⚠ {error}</div>}
+              <button className="btn" type="submit" disabled={loading}>
+                {loading ? 'Please wait…' : isLogin ? 'Sign In' : 'Create Account'}
+              </button>
+            </form>
+            <button className="toggle-btn" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
+              {isLogin ? "Don't have an account? Register free" : 'Already have an account? Sign in'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── DASHBOARD ───────────────────────────────────────────────────────────
+    function Dashboard({ user }) {
+      return (
+        <div>
+          <h1 className="page-title">Welcome back, {user?.username}! 👋</h1>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-label">Available Tokens</div>
+              <div className="stat-value">{user?.tokens ?? 0}</div>
+              <div className="stat-desc">Use tokens to generate images and chat</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Subscription</div>
+              <div className="stat-value">{(user?.subscriptionPlan || 'Free').toUpperCase()}</div>
+              <div className="stat-desc">Status: {user?.subscriptionStatus || 'Active'}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Total Spent</div>
+              <div className="stat-value">${(user?.totalSpent || 0).toFixed(2)}</div>
+              <div className="stat-desc">All-time spending</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Member Since</div>
+              <div className="stat-value" style={{fontSize:'18px'}}>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}</div>
+              <div className="stat-desc">Account created</div>
+            </div>
+          </div>
+          <div className="quick-actions">
+            <h2>Quick Actions</h2>
+            <div className="action-buttons">
+              <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('nav', {detail:'image'}))}>🖼 Generate Image</button>
+              <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('nav', {detail:'llm'}))}>🤖 AI Chat</button>
+              <button className="btn-outline" onClick={() => window.dispatchEvent(new CustomEvent('nav', {detail:'subscriptions'}))}>⭐ Upgrade Plan</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── IMAGE GENERATOR ─────────────────────────────────────────────────────
+    function ImageGenerator({ user, token, onTokensUpdated }) {
+      const [prompt, setPrompt] = useState('');
+      const [imageUrl, setImageUrl] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      const generate = async () => {
+        if (!prompt.trim()) return;
+        if ((user?.tokens ?? 0) < 5) { setError('You need at least 5 tokens to generate an image.'); return; }
+        setLoading(true); setError('');
+        try {
+          const data = await api('/api/generate/image', { method: 'POST', body: JSON.stringify({ prompt }) }, token);
+          setImageUrl(data.imageUrl);
+          onTokensUpdated(-5);
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div>
+          <h1 className="page-title">🖼 AI Image Generator</h1>
+          <div className="generator-grid">
+            <div className="card" style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+              <div className="section-label">Describe your image</div>
+              <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
+                placeholder="e.g., A futuristic city with flying cars at sunset, digital art style…" rows={5} />
+              <div className="token-info">⚡ Cost: 5 tokens per image &nbsp;|&nbsp; Your balance: {user?.tokens ?? 0} tokens</div>
+              {error && <div className="error-msg">⚠ {error}</div>}
+              <button className="btn" onClick={generate} disabled={loading || (user?.tokens ?? 0) < 5}>
+                {loading ? '⏳ Generating…' : '✨ Generate Image'}
+              </button>
+            </div>
+            <div className="image-preview">
+              {imageUrl
+                ? <img src={imageUrl} alt="Generated by AI" />
+                : <div className="placeholder">Your generated image will appear here</div>
+              }
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── LLM CHAT ────────────────────────────────────────────────────────────
+    function LLMChat({ user, token, onTokensUpdated }) {
+      const [messages, setMessages] = useState([
+        { role: 'assistant', content: "Hello! I'm your AI assistant. How can I help you today?" }
+      ]);
+      const [input, setInput] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const bottomRef = useRef(null);
+
+      useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+      const send = async () => {
+        if (!input.trim() || loading) return;
+        if ((user?.tokens ?? 0) < 2) { setError('You need at least 2 tokens to send a message.'); return; }
+        const userMsg = { role: 'user', content: input };
+        setMessages(m => [...m, userMsg]);
+        setInput(''); setError(''); setLoading(true);
+        try {
+          const data = await api('/api/generate/text', { method: 'POST', body: JSON.stringify({ prompt: input }) }, token);
+          setMessages(m => [...m, { role: 'assistant', content: data.text }]);
+          onTokensUpdated(-2);
+        } catch (err) {
+          setMessages(m => [...m, { role: 'assistant', content: '⚠ Error: ' + err.message }]);
+        } finally { setLoading(false); }
+      };
+
+      const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+
+      return (
+        <div>
+          <h1 className="page-title">🤖 AI Chat Assistant</h1>
+          <div className="chat-wrap">
+            <div className="messages-wrap">
+              {messages.map((m, i) => (
+                <div key={i} className={`msg msg-${m.role}`}>{m.content}</div>
+              ))}
+              {loading && <div className="msg msg-assistant loading">Thinking…</div>}
+              <div ref={bottomRef} />
+            </div>
+            <div className="chat-input-bar">
+              <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKey}
+                placeholder="Type a message… (Enter to send, Shift+Enter for new line)" rows={2} disabled={loading} />
+              <button className="btn" onClick={send} disabled={loading || (user?.tokens ?? 0) < 2}>Send</button>
+            </div>
+          </div>
+          {error && <div className="error-msg" style={{marginTop:8}}>⚠ {error}</div>}
+          <div className="token-info" style={{marginTop:8}}>⚡ Cost: 2 tokens per message &nbsp;|&nbsp; Balance: {user?.tokens ?? 0}</div>
+        </div>
+      );
+    }
+
+    // ─── SUBSCRIPTIONS ───────────────────────────────────────────────────────
+    function Subscriptions({ user, token }) {
+      const [plans, setPlans] = useState({});
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        api('/api/subscriptions/plans').then(setPlans).catch(e => setError(e.message));
+      }, []);
+
+      const subscribe = async (planId) => {
+        setLoading(true); setError('');
+        try {
+          const data = await api('/api/payment/create-subscription',
+            { method: 'POST', body: JSON.stringify({ planId }) }, token);
+          if (data.approvalUrl) window.location.href = data.approvalUrl;
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+      };
+
+      const defaultPlans = {
+        free:       { name: 'Free',         price: 0,      tokens: 100,  monthly: false },
+        basic:      { name: 'Basic',         price: 9.99,   tokens: 500,  monthly: true  },
+        pro:        { name: 'Pro Creator',   price: 29.99,  tokens: 2000, monthly: true  },
+        enterprise: { name: 'Enterprise',    price: 99.99,  tokens: 10000,monthly: true  },
+      };
+      const displayPlans = Object.keys(plans).length > 0 ? plans : defaultPlans;
+
+      return (
+        <div>
+          <h1 className="page-title">⭐ Subscription Plans</h1>
+          {error && <div className="error-msg" style={{marginBottom:16}}>⚠ {error}</div>}
+          <div className="plans-grid">
+            {Object.entries(displayPlans).map(([key, plan], i) => (
+              <div key={key} className={`plan-card ${i === 2 ? 'popular' : ''}`}>
+                {i === 2 && <div className="popular-badge">Most Popular</div>}
+                <div className="plan-name">{plan.name}</div>
+                <div className="plan-price">
+                  {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                  {plan.price > 0 && <span>/mo</span>}
+                </div>
+                <div className="plan-tokens">🔋 {plan.tokens} tokens {plan.monthly ? 'per month' : 'once'}</div>
+                <ul className="plan-features">
+                  <li>{plan.tokens} monthly tokens</li>
+                  <li>AI Image Generation</li>
+                  <li>AI Chat Assistant</li>
+                  {plan.price > 0 && <li>Priority Support</li>}
+                  {plan.price >= 29.99 && <li>Advanced AI Models</li>}
+                  {plan.price >= 99.99 && <li>API Access</li>}
+                </ul>
+                {user?.subscriptionPlan === key
+                  ? <div className="plan-current-label">✓ Current Plan</div>
+                  : <button className="btn" onClick={() => subscribe(key)} disabled={loading}>
+                      {key === 'free' ? 'Use Free' : 'Subscribe with PayPal'}
+                    </button>
+                }
+              </div>
+            ))}
+          </div>
+          <div className="card">
+            <h3 style={{marginBottom:12,fontWeight:700}}>Your Subscription</h3>
+            <p style={{marginBottom:6}}>Plan: <strong style={{color:'var(--primary)'}}>{(user?.subscriptionPlan || 'Free').toUpperCase()}</strong></p>
+            <p style={{marginBottom:6}}>Status: <strong>{user?.subscriptionStatus || 'Active'}</strong></p>
+            {user?.subscriptionEndDate && <p>Expires: <strong>{new Date(user.subscriptionEndDate).toLocaleDateString()}</strong></p>}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── ACCOUNT ─────────────────────────────────────────────────────────────
+    function Account({ user, token }) {
+      const [tab, setTab] = useState('transactions');
+      const [transactions, setTransactions] = useState([]);
+      const [generations, setGenerations] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        Promise.all([
+          api('/api/transactions', {}, token),
+          api('/api/generations', {}, token),
+        ]).then(([t, g]) => { setTransactions(t); setGenerations(g); })
+          .catch(console.error)
+          .finally(() => setLoading(false));
+      }, [token]);
+
+      return (
+        <div>
+          <h1 className="page-title">👤 My Account</h1>
+          <div className="account-info">
+            <div className="info-card"><label>Username</label><p>{user?.username}</p></div>
+            <div className="info-card"><label>Email</label><p>{user?.email}</p></div>
+            <div className="info-card"><label>Available Tokens</label><p className="tokens">{user?.tokens ?? 0}</p></div>
+            <div className="info-card"><label>Member Since</label><p>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}</p></div>
+          </div>
+
+          <div className="tabs">
+            <button className={`tab-btn ${tab === 'transactions' ? 'active' : ''}`} onClick={() => setTab('transactions')}>Transactions</button>
+            <button className={`tab-btn ${tab === 'generations' ? 'active' : ''}`} onClick={() => setTab('generations')}>Generations</button>
+          </div>
+
+          {loading && <div className="loading">Loading history…</div>}
+
+          {!loading && tab === 'transactions' && (
+            transactions.length === 0
+              ? <div className="empty-state">No transactions yet</div>
+              : <table>
+                  <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Tokens</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {transactions.map(t => (
+                      <tr key={t._id}>
+                        <td>{new Date(t.createdAt).toLocaleDateString()}</td>
+                        <td>{t.type}</td>
+                        <td>${t.amount}</td>
+                        <td>+{t.tokensAdded}</td>
+                        <td className={`status-${t.status}`}>{t.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+          )}
+
+          {!loading && tab === 'generations' && (
+            generations.length === 0
+              ? <div className="empty-state">No generations yet</div>
+              : <table>
+                  <thead><tr><th>Date</th><th>Type</th><th>Prompt</th><th>Tokens Used</th></tr></thead>
+                  <tbody>
+                    {generations.map(g => (
+                      <tr key={g._id}>
+                        <td>{new Date(g.createdAt).toLocaleDateString()}</td>
+                        <td>{g.type}</td>
+                        <td>{g.prompt?.substring(0, 40)}…</td>
+                        <td>{g.tokensUsed}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+          )}
+        </div>
+      );
+    }
+
+    // ─── APP ROOT ────────────────────────────────────────────────────────────
+    function App() {
+      const [token, setToken] = useState(getToken);
+      const [user, setUser] = useState(getUser);
+      const [page, setPage] = useState('dashboard');
+
+      // Listen for nav events from quick-action buttons
+      useEffect(() => {
+        const handler = (e) => setPage(e.detail);
+        window.addEventListener('nav', handler);
+        return () => window.removeEventListener('nav', handler);
+      }, []);
+
+      // Refresh user profile on mount when token exists
+      useEffect(() => {
+        if (token) {
+          api('/api/user/profile', {}, token)
+            .then(u => { setUser(u); localStorage.setItem('aivw_user', JSON.stringify(u)); })
+            .catch(() => {}); // silently fail — stale user data is fine
+        }
+      }, [token]);
+
+      const handleLogin = (tok, usr) => { setToken(tok); setUser(usr); };
+      const handleLogout = () => { clearAuth(); setToken(null); setUser(null); };
+      const handleTokensUpdated = (delta) => setUser(u => ({ ...u, tokens: (u?.tokens ?? 0) + delta }));
+
+      if (!token) return <Auth onLogin={handleLogin} />;
+
+      const navItems = [
+        { id: 'dashboard',     label: '🏠 Dashboard'   },
+        { id: 'image',         label: '🖼 Image'        },
+        { id: 'llm',           label: '🤖 AI Chat'      },
+        { id: 'subscriptions', label: '⭐ Plans'        },
+        { id: 'account',       label: '👤 Account'      },
+      ];
+
+      return (
+        <>
+          <nav className="navbar">
+            <div className="navbar-brand">🎨 AIVisualWorld</div>
+            <div className="navbar-links">
+              {navItems.map(n => (
+                <button key={n.id} className={`nav-btn ${page === n.id ? 'active' : ''}`} onClick={() => setPage(n.id)}>
+                  {n.label}
+                </button>
+              ))}
+              <button className="nav-btn logout" onClick={handleLogout}>Logout</button>
+            </div>
+          </nav>
+          <div className="container">
+            {page === 'dashboard'     && <Dashboard user={user} />}
+            {page === 'image'         && <ImageGenerator user={user} token={token} onTokensUpdated={handleTokensUpdated} />}
+            {page === 'llm'           && <LLMChat user={user} token={token} onTokensUpdated={handleTokensUpdated} />}
+            {page === 'subscriptions' && <Subscriptions user={user} token={token} />}
+            {page === 'account'       && <Account user={user} token={token} />}
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
