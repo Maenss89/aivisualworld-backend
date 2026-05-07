@@ -13,13 +13,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-RUN npm install -g pm2
-
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/server.js ./
-COPY --from=builder /app/.env ./
+COPY --from=builder /app/public ./public
 
-EXPOSE 5000
+EXPOSE 10000
 
 CMD ["node", "server.js"]
