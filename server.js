@@ -40,9 +40,9 @@ paypal.configure({
 });
 
 // ===== OPENAI CONFIGURATION =====
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 // ===== MONGODB CONNECTION =====
 mongoose
@@ -237,6 +237,10 @@ app.post("/api/generate/text", authenticate, async (req, res) => {
     const tokensRequired = 2;
     if (user.tokens < tokensRequired) {
       return res.status(400).json({ error: "Insufficient tokens" });
+    }
+
+    if (!openai) {
+      return res.status(503).json({ error: "OpenAI API key not configured" });
     }
 
     const response = await openai.chat.completions.create({
